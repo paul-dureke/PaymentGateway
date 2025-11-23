@@ -25,7 +25,9 @@ namespace PaymentGateway.Api.Services
                 {
                     Id = Guid.Empty,
                     Status = PaymentStatus.Rejected,
-                    CardNumberLastFour = paymentRequest.CardNumberLastFour,
+                    CardNumberLastFour = string.IsNullOrEmpty(paymentRequest.CardNumber) || paymentRequest.CardNumber.Length < 4
+                                            ? paymentRequest.CardNumber
+                                            : paymentRequest.CardNumber[^4..],
                     ExpiryMonth = paymentRequest.ExpiryMonth,
                     ExpiryYear = paymentRequest.ExpiryYear,
                     Amount = paymentRequest.Amount,
@@ -36,7 +38,7 @@ namespace PaymentGateway.Api.Services
             var payment = new Payment
             {
                 Id = Guid.NewGuid(),
-                CardNumber = paymentRequest.CardNumberLastFour,
+                CardNumber = paymentRequest.CardNumber,
                 ExpiryMonth = paymentRequest.ExpiryMonth,
                 ExpiryYear = paymentRequest.ExpiryYear,
                 Amount = paymentRequest.Amount,
@@ -57,7 +59,7 @@ namespace PaymentGateway.Api.Services
             {
                 Id = payment.Id,
                 Status = payment.Status,
-                CardNumberLastFour = payment.CardNumber,
+                CardNumberLastFour = payment.CardNumber[^4..],
                 ExpiryMonth = payment.ExpiryMonth,
                 ExpiryYear = payment.ExpiryYear,
                 Amount = payment.Amount,

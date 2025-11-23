@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Moq;
 
 using PaymentGateway.Api.Models;
-using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Services;
-using Moq;
 
 namespace PaymentGateway.Api.Tests
 {
@@ -24,12 +18,12 @@ namespace PaymentGateway.Api.Tests
 
             var paymentRequest = new PostPaymentRequest
             {
-                CardNumberLastFour = 1111,
+                CardNumber = "1234567890123456",
                 ExpiryMonth = 12,
                 ExpiryYear = 2027,
                 Currency = "GBP",
                 Amount = 100,
-                Cvv = 123
+                Cvv = "123"
             };
 
             acquiringBankMock
@@ -39,13 +33,16 @@ namespace PaymentGateway.Api.Tests
                     Authorized = true,
                     AuthorizationCode = Guid.NewGuid().ToString(),
                 });
+            validatorMock
+                .Setup(x => x.Validate(paymentRequest))
+                .Returns(new PaymentRequestValidationResult(true, null));
 
             // Act
             var result = await paymentService.ProcessPaymentAsync(paymentRequest);
 
             // Assert
             Assert.Equal(PaymentStatus.Authorized, result.Status);
-            Assert.Equal(1111, result.CardNumberLastFour);
+            Assert.Equal("3456", result.CardNumberLastFour);
             Assert.Equal(paymentRequest.Amount, result.Amount);
             Assert.Equal(paymentRequest.Currency, result.Currency);
             Assert.NotEqual(Guid.Empty, result.Id);
@@ -63,12 +60,12 @@ namespace PaymentGateway.Api.Tests
             var paymentService = new PaymentService(acquiringBankMock.Object, validatorMock.Object);
             var paymentRequest = new PostPaymentRequest
             {
-                CardNumberLastFour = 2222,
+                CardNumber = "1234567890123456",
                 ExpiryMonth = 11,
                 ExpiryYear = 2026,
                 Currency = "GBP",
                 Amount = 200,
-                Cvv = 456
+                Cvv = "456"
             };
             acquiringBankMock
                 .Setup(x => x.PaymentAsync(It.IsAny<Payment>()))
@@ -77,13 +74,16 @@ namespace PaymentGateway.Api.Tests
                     Authorized = false,
                     AuthorizationCode = string.Empty,
                 });
+            validatorMock
+                .Setup(x => x.Validate(paymentRequest))
+                .Returns(new PaymentRequestValidationResult(true, null));
 
             // Act
             var result = await paymentService.ProcessPaymentAsync(paymentRequest);
 
             // Assert
             Assert.Equal(PaymentStatus.Declined, result.Status);
-            Assert.Equal(2222, result.CardNumberLastFour);
+            Assert.Equal("3456", result.CardNumberLastFour);
             Assert.Equal(paymentRequest.Amount, result.Amount);
             Assert.Equal(paymentRequest.Currency, result.Currency);
             Assert.NotEqual(Guid.Empty, result.Id);
@@ -106,7 +106,7 @@ namespace PaymentGateway.Api.Tests
 
             validatorMock
                 .Setup(x => x.Validate(invalidRequest))
-                .Returns(new PaymentRequestValidationResult(false, "Invalid payment request" ));
+                .Returns(new PaymentRequestValidationResult(false, "Invalid payment request"));
 
             // Act 
             var result = await paymentService.ProcessPaymentAsync(invalidRequest);
