@@ -7,14 +7,32 @@ namespace PaymentGateway.Api.Services
     public class PaymentService
     {
         private readonly IAcquiringBankClient _acquiringBank;
+        private readonly IPaymentRequestValidator _validator;
 
-        public PaymentService(IAcquiringBankClient acquiringBank)
+        public PaymentService(IAcquiringBankClient acquiringBank, IPaymentRequestValidator validator)
         {
             _acquiringBank = acquiringBank;
+            _validator = validator;
         }
 
         public async Task<PostPaymentResponse> ProcessPaymentAsync(PostPaymentRequest paymentRequest)
         {
+            var validationResult = _validator.Validate(paymentRequest);
+
+            if (!validationResult.IsValid)
+            {
+                return new PostPaymentResponse
+                {
+                    Id = Guid.Empty,
+                    Status = PaymentStatus.Rejected,
+                    CardNumberLastFour = paymentRequest.CardNumberLastFour,
+                    ExpiryMonth = paymentRequest.ExpiryMonth,
+                    ExpiryYear = paymentRequest.ExpiryYear,
+                    Amount = paymentRequest.Amount,
+                    Currency = paymentRequest.Currency
+                };
+            }
+
             var payment = new Payment
             {
                 Id = Guid.NewGuid(),

@@ -19,7 +19,8 @@ namespace PaymentGateway.Api.Tests
         {
             // Arrange
             var acquiringBankMock = new Mock<IAcquiringBankClient>();
-            var paymentService = new PaymentService(acquiringBankMock.Object);
+            var validatorMock = new Mock<IPaymentRequestValidator>();
+            var paymentService = new PaymentService(acquiringBankMock.Object, validatorMock.Object);
 
             var paymentRequest = new PostPaymentRequest
             {
@@ -57,7 +58,9 @@ namespace PaymentGateway.Api.Tests
         {
             // Arrange
             var acquiringBankMock = new Mock<IAcquiringBankClient>();
-            var paymentService = new PaymentService(acquiringBankMock.Object);
+            var validatorMock = new Mock<IPaymentRequestValidator>();
+
+            var paymentService = new PaymentService(acquiringBankMock.Object, validatorMock.Object);
             var paymentRequest = new PostPaymentRequest
             {
                 CardNumberLastFour = 2222,
@@ -85,6 +88,33 @@ namespace PaymentGateway.Api.Tests
             Assert.Equal(paymentRequest.Currency, result.Currency);
             Assert.NotEqual(Guid.Empty, result.Id);
             acquiringBankMock.Verify(x => x.PaymentAsync(It.IsAny<Payment>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task ProcessPayment_WhenRequestIsInvalid_ReturnsRejected()
+        {
+            // Arrange
+            var acquiringBankMock = new Mock<IAcquiringBankClient>();
+            var validatorMock = new Mock<IPaymentRequestValidator>();
+
+            var paymentService = new PaymentService(acquiringBankMock.Object, validatorMock.Object);
+
+            var invalidRequest = new PostPaymentRequest
+            {
+                Currency = "GBP"
+            };
+
+            validatorMock
+                .Setup(x => x.Validate(invalidRequest))
+                .Returns(new PaymentRequestValidationResult(false, "Invalid payment request" ));
+
+            // Act 
+            var result = await paymentService.ProcessPaymentAsync(invalidRequest);
+
+            // Assert
+            Assert.Equal(PaymentStatus.Rejected, result.Status);
+
+            acquiringBankMock.Verify(x => x.PaymentAsync(It.IsAny<Payment>()), Times.Never);
         }
     }
 }
