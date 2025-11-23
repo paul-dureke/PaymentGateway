@@ -9,7 +9,7 @@
         public string Currency { get; internal set; } = string.Empty;
         public int Cvv { get; internal set; }
         public Guid Id { get; internal set; }
-        public Guid AuthorizationCode { get; internal set; }
+        public string AuthorizationCode { get; internal set; } = string.Empty;
         public PaymentStatus Status { get; internal set; }
     }
 }

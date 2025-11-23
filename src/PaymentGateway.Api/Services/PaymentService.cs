@@ -28,7 +28,11 @@ namespace PaymentGateway.Api.Services
 
             var result = await _acquiringBank.PaymentAsync(payment);
 
-            payment.Status = result.Authorized ? PaymentStatus.Authorized : PaymentStatus.Declined;
+            if(result.Authorized)
+                payment.Status = PaymentStatus.Authorized;
+            else
+                payment.Status = PaymentStatus.Declined;
+
             payment.AuthorizationCode = result.AuthorizationCode;
 
             return new PostPaymentResponse

@@ -33,9 +33,10 @@ namespace PaymentGateway.Api.Tests
 
             acquiringBankMock
                 .Setup(x => x.PaymentAsync(It.IsAny<Payment>()))
-                .ReturnsAsync(new BankAuthorizationResponse { 
-                    Authorized = true, 
-                    AuthorizationCode = Guid.NewGuid() 
+                .ReturnsAsync(new BankAuthorizationResponse
+                {
+                    Authorized = true,
+                    AuthorizationCode = Guid.NewGuid().ToString(),
                 });
 
             // Act
@@ -48,6 +49,41 @@ namespace PaymentGateway.Api.Tests
             Assert.Equal(paymentRequest.Currency, result.Currency);
             Assert.NotEqual(Guid.Empty, result.Id);
 
+            acquiringBankMock.Verify(x => x.PaymentAsync(It.IsAny<Payment>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task ProcessPayment_WhenBankDeclines_ReturnsDeclined()
+        {
+            // Arrange
+            var acquiringBankMock = new Mock<IAcquiringBankClient>();
+            var paymentService = new PaymentService(acquiringBankMock.Object);
+            var paymentRequest = new PostPaymentRequest
+            {
+                CardNumberLastFour = 2222,
+                ExpiryMonth = 11,
+                ExpiryYear = 2026,
+                Currency = "GBP",
+                Amount = 200,
+                Cvv = 456
+            };
+            acquiringBankMock
+                .Setup(x => x.PaymentAsync(It.IsAny<Payment>()))
+                .ReturnsAsync(new BankAuthorizationResponse
+                {
+                    Authorized = false,
+                    AuthorizationCode = string.Empty,
+                });
+
+            // Act
+            var result = await paymentService.ProcessPaymentAsync(paymentRequest);
+
+            // Assert
+            Assert.Equal(PaymentStatus.Declined, result.Status);
+            Assert.Equal(2222, result.CardNumberLastFour);
+            Assert.Equal(paymentRequest.Amount, result.Amount);
+            Assert.Equal(paymentRequest.Currency, result.Currency);
+            Assert.NotEqual(Guid.Empty, result.Id);
             acquiringBankMock.Verify(x => x.PaymentAsync(It.IsAny<Payment>()), Times.Once);
         }
     }
