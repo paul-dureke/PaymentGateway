@@ -1,0 +1,54 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+using PaymentGateway.Api.Models;
+using PaymentGateway.Api.Models.Responses;
+using PaymentGateway.Api.Models.Requests;
+using PaymentGateway.Api.Services;
+using Moq;
+
+namespace PaymentGateway.Api.Tests
+{
+    public class PaymentServiceTests
+    {
+        [Fact]
+        public async Task ProcessPayment_WhenBankAuthorizes_ReturnsAuthorized()
+        {
+            // Arrange
+            var acquiringBankMock = new Mock<IAcquiringBankClient>();
+            var paymentService = new PaymentService(acquiringBankMock.Object);
+
+            var paymentRequest = new PostPaymentRequest
+            {
+                CardNumberLastFour = 1111,
+                ExpiryMonth = 12,
+                ExpiryYear = 2027,
+                Currency = "GBP",
+                Amount = 100,
+                Cvv = 123
+            };
+
+            acquiringBankMock
+                .Setup(x => x.PaymentAsync(It.IsAny<Payment>()))
+                .ReturnsAsync(new BankAuthorizationResponse { 
+                    Authorized = true, 
+                    AuthorizationCode = Guid.NewGuid() 
+                });
+
+            // Act
+            var result = await paymentService.ProcessPaymentAsync(paymentRequest);
+
+            // Assert
+            Assert.Equal(PaymentStatus.Authorized, result.Status);
+            Assert.Equal(1111, result.CardNumberLastFour);
+            Assert.Equal(paymentRequest.Amount, result.Amount);
+            Assert.Equal(paymentRequest.Currency, result.Currency);
+            Assert.NotEqual(Guid.Empty, result.Id);
+
+            acquiringBankMock.Verify(x => x.PaymentAsync(It.IsAny<Payment>()), Times.Once);
+        }
+    }
+}
