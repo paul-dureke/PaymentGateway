@@ -4,15 +4,35 @@ using PaymentGateway.Api.Models.Responses;
 
 namespace PaymentGateway.Api.Services
 {
-    public class PaymentService
+    public class PaymentService : IPaymentService
     {
         private readonly IAcquiringBankClient _acquiringBank;
         private readonly IPaymentRequestValidator _validator;
+        private readonly IPaymentsRepository _paymentsRepository;
 
-        public PaymentService(IAcquiringBankClient acquiringBank, IPaymentRequestValidator validator)
+        public PaymentService(IAcquiringBankClient acquiringBank, IPaymentRequestValidator validator, IPaymentsRepository paymentsRepository)
         {
             _acquiringBank = acquiringBank;
             _validator = validator;
+            _paymentsRepository = paymentsRepository;
+        }
+
+        public Task<GetPaymentResponse> GetPaymentAsync(Guid id)
+        {
+            var savedpayment = _paymentsRepository.Get(id);
+            if (savedpayment == null)
+                return Task.FromResult<GetPaymentResponse>(null!);
+
+            return Task.FromResult(new GetPaymentResponse
+            {
+                Id = savedpayment.Id,
+                Status = savedpayment.Status,
+                CardNumberLastFour = savedpayment.CardNumberLastFour!,
+                ExpiryMonth = savedpayment.ExpiryMonth,
+                ExpiryYear = savedpayment.ExpiryYear,
+                Currency = savedpayment.Currency,
+                Amount = savedpayment.Amount
+            });
         }
 
         public async Task<PostPaymentResponse> ProcessPaymentAsync(PostPaymentRequest paymentRequest)
@@ -25,9 +45,7 @@ namespace PaymentGateway.Api.Services
                 {
                     Id = Guid.Empty,
                     Status = PaymentStatus.Rejected,
-                    CardNumberLastFour = string.IsNullOrEmpty(paymentRequest.CardNumber) || paymentRequest.CardNumber.Length < 4
-                                            ? paymentRequest.CardNumber
-                                            : paymentRequest.CardNumber[^4..],
+                    CardNumberLastFour = ExtractLastFourDigits(paymentRequest.CardNumber),
                     ExpiryMonth = paymentRequest.ExpiryMonth,
                     ExpiryYear = paymentRequest.ExpiryYear,
                     Amount = paymentRequest.Amount,
@@ -45,26 +63,39 @@ namespace PaymentGateway.Api.Services
                 Currency = paymentRequest.Currency,
                 Cvv = paymentRequest.Cvv
             };
+            BankAuthorizationResponse result;
+            try
+            {
+                result = await _acquiringBank.PaymentAsync(payment);
+            }
+            catch (BankUnavailableException) { throw; }
 
-            var result = await _acquiringBank.PaymentAsync(payment);
-
-            if(result.Authorized)
-                payment.Status = PaymentStatus.Authorized;
-            else
-                payment.Status = PaymentStatus.Declined;
-
+            payment.Status = result.Authorized ? PaymentStatus.Authorized : PaymentStatus.Declined;
             payment.AuthorizationCode = result.AuthorizationCode;
 
-            return new PostPaymentResponse
+            var response = new PostPaymentResponse
             {
                 Id = payment.Id,
                 Status = payment.Status,
-                CardNumberLastFour = payment.CardNumber[^4..],
+                CardNumberLastFour = ExtractLastFourDigits(payment.CardNumber),
                 ExpiryMonth = payment.ExpiryMonth,
                 ExpiryYear = payment.ExpiryYear,
                 Amount = payment.Amount,
                 Currency = payment.Currency
             };
+
+            _paymentsRepository.Add(response);
+            return response;
+        }
+
+        private string? ExtractLastFourDigits(string? cardNumber)
+        {
+            if (string.IsNullOrEmpty(cardNumber) || cardNumber.Length < 4)
+            {
+                return cardNumber;
+            }
+
+            return cardNumber[^4..];
         }
     }
 }

@@ -14,7 +14,9 @@ namespace PaymentGateway.Api.Tests
             // Arrange
             var acquiringBankMock = new Mock<IAcquiringBankClient>();
             var validatorMock = new Mock<IPaymentRequestValidator>();
-            var paymentService = new PaymentService(acquiringBankMock.Object, validatorMock.Object);
+            var repositoryMock = new Mock<IPaymentsRepository>();
+
+            var paymentService = new PaymentService(acquiringBankMock.Object, validatorMock.Object, repositoryMock.Object);
 
             var paymentRequest = new PostPaymentRequest
             {
@@ -56,8 +58,9 @@ namespace PaymentGateway.Api.Tests
             // Arrange
             var acquiringBankMock = new Mock<IAcquiringBankClient>();
             var validatorMock = new Mock<IPaymentRequestValidator>();
+            var repositoryMock = new Mock<IPaymentsRepository>();
 
-            var paymentService = new PaymentService(acquiringBankMock.Object, validatorMock.Object);
+            var paymentService = new PaymentService(acquiringBankMock.Object, validatorMock.Object, repositoryMock.Object);
             var paymentRequest = new PostPaymentRequest
             {
                 CardNumber = "1234567890123456",
@@ -96,8 +99,9 @@ namespace PaymentGateway.Api.Tests
             // Arrange
             var acquiringBankMock = new Mock<IAcquiringBankClient>();
             var validatorMock = new Mock<IPaymentRequestValidator>();
+            var repositoryMock = new Mock<IPaymentsRepository>();
 
-            var paymentService = new PaymentService(acquiringBankMock.Object, validatorMock.Object);
+            var paymentService = new PaymentService(acquiringBankMock.Object, validatorMock.Object, repositoryMock.Object);
 
             var invalidRequest = new PostPaymentRequest
             {
