@@ -13,10 +13,14 @@ using Moq;
 
 using PaymentGateway.Api.Controllers;
 using PaymentGateway.Api.Models;
+using PaymentGateway.Api.Models.DTOs;
+using PaymentGateway.Api.Models.Entities;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Api.Services;
+using PaymentGateway.Api.Services.Implementations;
+using PaymentGateway.Api.Services.Interfaces;
 
-namespace PaymentGateway.Api.Tests;
+namespace PaymentGateway.Api.Tests.Controllers;
 
 public class PaymentsControllerTests
 {
@@ -38,7 +42,7 @@ public class PaymentsControllerTests
 
     private void ConfigureServices(IServiceCollection services, IPaymentsRepository repository)
     {
-        services.AddSingleton<IPaymentsRepository>(repository);
+        services.AddSingleton(repository);
         services.AddSingleton<IPaymentRequestValidator, PaymentRequestValidator>();
 
         // Remove all existing IAcquiringBankClient registrations (including typed clients)

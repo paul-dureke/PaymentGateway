@@ -1,5 +1,6 @@
-﻿
-using PaymentGateway.Api.Models;
+﻿using PaymentGateway.Api.Models.DTOs;
+using PaymentGateway.Api.Models.Entities;
+using PaymentGateway.Api.Services.Interfaces;
 
 namespace PaymentGateway.Api.Services
 {

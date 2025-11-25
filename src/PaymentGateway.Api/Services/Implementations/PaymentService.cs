@@ -1,8 +1,11 @@
 ﻿using PaymentGateway.Api.Models;
+using PaymentGateway.Api.Models.DTOs;
+using PaymentGateway.Api.Models.Entities;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
+using PaymentGateway.Api.Services.Interfaces;
 
-namespace PaymentGateway.Api.Services
+namespace PaymentGateway.Api.Services.Implementations
 {
     public class PaymentService : IPaymentService
     {

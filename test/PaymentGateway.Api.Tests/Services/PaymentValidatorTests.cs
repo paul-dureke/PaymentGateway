@@ -1,7 +1,7 @@
 ﻿using PaymentGateway.Api.Models.Requests;
-using PaymentGateway.Api.Services;
+using PaymentGateway.Api.Services.Implementations;
 
-namespace PaymentGateway.Api.Tests
+namespace PaymentGateway.Api.Tests.Services
 {
     public class PaymentValidatorTests
     {

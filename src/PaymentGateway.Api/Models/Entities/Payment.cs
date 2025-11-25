@@ -1,4 +1,4 @@
-﻿namespace PaymentGateway.Api.Models
+﻿namespace PaymentGateway.Api.Models.Entities
 {
     public class Payment
     {

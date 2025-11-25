@@ -1,8 +1,9 @@
 ﻿using System.Text.RegularExpressions;
 
 using PaymentGateway.Api.Models.Requests;
+using PaymentGateway.Api.Services.Interfaces;
 
-namespace PaymentGateway.Api.Services
+namespace PaymentGateway.Api.Services.Implementations
 {
     public class PaymentRequestValidator : IPaymentRequestValidator
     {

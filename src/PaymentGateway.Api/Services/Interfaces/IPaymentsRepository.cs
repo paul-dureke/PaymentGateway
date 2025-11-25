@@ -1,7 +1,6 @@
-﻿
-using PaymentGateway.Api.Models.Responses;
+﻿using PaymentGateway.Api.Models.Responses;
 
-namespace PaymentGateway.Api.Services
+namespace PaymentGateway.Api.Services.Interfaces
 {
     public interface IPaymentsRepository
     {

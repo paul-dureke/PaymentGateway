@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 
-using PaymentGateway.Api.Services;
+using PaymentGateway.Api.Services.Implementations;
+using PaymentGateway.Api.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 

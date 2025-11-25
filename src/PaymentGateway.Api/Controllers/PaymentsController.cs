@@ -4,6 +4,7 @@ using PaymentGateway.Api.Models;
 using PaymentGateway.Api.Models.Requests;
 using PaymentGateway.Api.Models.Responses;
 using PaymentGateway.Api.Services;
+using PaymentGateway.Api.Services.Interfaces;
 
 namespace PaymentGateway.Api.Controllers;
 
@@ -35,7 +36,6 @@ public class PaymentsController : Controller
         {
             var result = await _paymentService.ProcessPaymentAsync(request);
 
-            // Validation failure → 400
             if (result.Status == PaymentStatus.Rejected && result.Id == Guid.Empty)
             {
                 return BadRequest(result);
